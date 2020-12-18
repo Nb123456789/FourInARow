@@ -1,0 +1,35 @@
+Assumptions
+-----------
+<sprint1>
+1.board is empty at the beginning 
+2.nothing changes but the position that was chosen
+3.once token is inserted the position will not be changed
+
+<sprint2>
+1.Board is Empty at the first state
+2.once token is inserted the position will not be changed
+3.nothing changes but the position that was chosen
+4.can't choose non-empty slots(red)
+5.if position was chosen then insert token
+6.can't put  token above an empty slot unless it is the first row (highest empty slot for row)
+
+
+
+
+Guarantees
+----------
+<sprint1>
+1.start game with first player
+2.switch turns between players
+3.can't choose non-empty slots
+4.red player can't put  token above an empty slot unless it is the first row (highest empty slot for row)
+5.if position was chosen then insert token
+6.winning strategy first move rule(always play middle col)
+
+<sprint2>
+1. Yellow player can't put  token above an empty slot unless it is the first row (highest empty slot for row)
+2. If the red player chose a slot - then yellow player must not choose the same one
+3.can't choose non-empty slots(yellow)
+4. If one of the players wins - stop the game
+5. Yellow must have four in a row
+6. Red must never win

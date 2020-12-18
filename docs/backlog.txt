@@ -1,0 +1,42 @@
+Project Tasks
+-------------
+<sprint1>
+T1.try to combine assumptions and guarantees for both colors and not have separate rules(Done in sprint2)
+T2.maybe remove insertTokenYellowPositionRow and insertTokenRedPositionRow because can't really choose a row in move
+T3.create Counters for consecutive tokens (need to keep track of the tokens in a row for the winning strategy)(Done in sprint2- not needed)
+T4.write winning strategy gar/asmp(Done in sprint2)
+T5.support multiple dimensions 
+T6.add support for special rules(allow horizontal row)
+T7.support color changes for first player 
+
+<sprint2>
+T1.support multiple dimensions 
+T2.add support for special rules(allow horizontal row)
+T3.support color changes for first player
+T4.maybe remove insertTokenYellowPositionRow and insertTokenRedPositionRow because can't really choose a row in move
+T5.fix bugs of red and yellow choosing same slot which causes collisions þ
+T6.fix non well separated problemþ
+T7.support larger dimensions for boardþ
+
+Delivered in Sprint 1
+---------------------
+
+T1. Basic safety guarantees and assumptions for game:
+board functions correctly
+moves are valid
+switch turns between players
+begin writing the winning strategy for yellow(winning) player
+
+Delivered in Sprint 2
+---------------------
+1.All marked tasks from sprint 1
+2.Removing "Switch turns" flag - redudant 
+3.Removing numberOfTokens (red,yellow) variables - redudant
+4.Defining winning state + end of game
+5.Adding predicates and consts
+6.Moving to lower dimensions (2*3 instead of 6*7)
+7.Removing redudant variables (gridSize, numberOfTokens, etc -> can be inferred from other variables)
+8.Verifying all guarantees and assumptions are as needed
+9.Changing board to be updated only on the next state
+10.Fix to problem that player's selection does not really changes the board.
+11.Turning the spec to be realizable.

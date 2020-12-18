@@ -1,0 +1,137 @@
+spec Connect4Main
+
+define NUMBEROFCOLUMNS := 3; // need to be always odd
+define NUMBEROFROWS := 3;
+
+define NUMBEROFCOLUMNSMINUSONE := NUMBEROFCOLUMNS-1;
+define NUMBEROFROWSMINUSONE := NUMBEROFROWS-1;
+
+type color = {EMPTY, P1, P2};
+
+define existEmpty := exists i in Int(0..NUMBEROFROWSMINUSONE) .
+	exists j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+	stateOfGrid[i][j]=EMPTY;
+	
+//state of grid
+env color[NUMBEROFROWS][NUMBEROFCOLUMNS] stateOfGrid; 
+
+// current turn is sys turn
+env boolean sysTurn;
+
+// someone wins
+env boolean endGame;
+
+// env token to insert
+env Int(0..NUMBEROFROWSMINUSONE) envRow;
+env Int(0..NUMBEROFCOLUMNSMINUSONE) envCol; 
+
+// sys token to insert
+sys Int(0..NUMBEROFROWSMINUSONE) sysRow;
+sys Int(0..NUMBEROFCOLUMNSMINUSONE) sysCol;
+
+//board is initially empty
+asm boardIsInitiallyEmpty:
+ini forall i in Int(0..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    stateOfGrid[i][j] = EMPTY;
+
+// non empty position remains non empty and keeps its value
+asm nonEmptyPositionRemainsNonEmpty:
+G 	forall i in Int(0..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+	(stateOfGrid[i][j]!=EMPTY) -> (next(stateOfGrid[i][j])=stateOfGrid[i][j]);
+
+// sys player plays first    
+asm ini sysTurn = true;
+
+  
+asm ini endGame = false;
+
+// if there is an empty slot, turns always alternate 
+asm G existEmpty -> (next(sysTurn) != sysTurn);
+// if there is no empty slot, we don't care about turns anymore, say I fix it to make the strategy smaller
+asm G !existEmpty -> next(sysTurn) = true;
+
+// just to make the strategy smaller, not really necessary
+// envRow and envCol are anyways ignored when sysTurn
+asm G !sysTurn -> (next(envRow)=0 & next(envCol)=0); 
+
+asm envCanOnlyChooseAnEmptyPosition:
+G   next(existEmpty) -> (!next(sysTurn) -> (
+	forall i in Int(0..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    ((i=next(envRow)) & (j=next(envCol))) -> next(stateOfGrid[i][j])=EMPTY
+    )); 
+
+gar sysCanOnlyChooseAnEmptyPosition:
+G   next(existEmpty) -> (next(sysTurn) -> (
+	forall i in Int(0..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    ((i=next(sysRow)) & (j=next(sysCol))) -> next(stateOfGrid[i][j])=EMPTY
+    ));
+
+asm envChoiceBecomesP1:
+G  existEmpty -> (!sysTurn -> (
+	forall i in Int(0..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    (
+    	 ( ((i=envRow) & (j=envCol) & stateOfGrid[i][j]=EMPTY) -> next(stateOfGrid[i][j])=P1 ) &
+    	 ( ((i!=envRow) | (j!=envCol) | stateOfGrid[i][j]!=EMPTY) -> next(stateOfGrid[i][j])=stateOfGrid[i][j]  )  
+    )));     
+
+asm sysChoiceBecomesP2:
+G   existEmpty -> (sysTurn -> (
+	forall i in Int(0..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    (
+    	(((i=sysRow) & (j=sysCol) & stateOfGrid[i][j]=EMPTY) -> next(stateOfGrid[i][j])=P2 ) & 
+    	( ((i!=sysRow) | (j!=sysCol) | stateOfGrid[i][j]!=EMPTY) -> next(stateOfGrid[i][j])=stateOfGrid[i][j]  ) 
+    )));    
+
+// can't put token above an empty slot unless it is the first row (highest empty slot for row):
+
+gar nonEmptySlotAlwaysHasNonEmptySlotBelowIt:
+G   next(existEmpty) -> (next(sysTurn) -> (
+	forall i in Int(1..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    ((i=next(sysRow)) & (j=next(sysCol)) & next(stateOfGrid[i][j])=EMPTY) -> next(stateOfGrid[i-1][j])!=EMPTY
+    ));
+    
+asm nonEmptySlotAlwaysHasNonEmptySlotBelowIt2:
+G   next(existEmpty) -> (!next(sysTurn) -> (
+	forall i in Int(1..NUMBEROFROWSMINUSONE) .
+	forall j in Int(0..NUMBEROFCOLUMNSMINUSONE) .
+    ((i=next(envRow)) & (j=next(envCol)) & next(stateOfGrid[i][j])=EMPTY) -> next(stateOfGrid[i-1][j])!=EMPTY
+    ));    
+    
+// about winning:
+
+ 
+define NUMBEROFCOLUMNSMINUS4 := NUMBEROFCOLUMNS-2;
+define NUMBEROFROWSMINUS4 := NUMBEROFROWS-2;
+
+predicate winner(color clr):
+	(forall i in Int(0..(NUMBEROFROWSMINUS4)) .
+	forall j in Int(0..(NUMBEROFCOLUMNSMINUSONE)) .
+		(stateOfGrid[i][j]=clr & stateOfGrid[i+1][j]=clr ))
+	|
+	(forall i in Int(0..(NUMBEROFROWSMINUSONE)) .
+	forall j in Int(0..(NUMBEROFCOLUMNSMINUS4)) .
+		(stateOfGrid[i][j]=clr & stateOfGrid[i][j+1]=clr ))
+	;
+	
+define sysWin := winner(P2);
+define envWin := winner(P1);	
+
+asm winningFlag:
+G (sysWin | envWin | !existEmpty) -> next(endGame)=true;
+
+asm ini endGame = false;
+
+
+
+gar G !envWin; // system never loses - relatively fast
+//gar GF sysWin | !existEmpty; // system wins - slow synthesis
+
+// add gar to say that when someone wins, there will be no more turns
+ 
